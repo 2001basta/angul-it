@@ -5,3 +5,10 @@ export interface Challenge {
     options?: string[];
     correctAnswer: any;
 }
+
+export interface CaptchaState {
+    challenges: Challenge[];
+    answers: any[];
+    currentStage: number;
+    completed: boolean;
+}

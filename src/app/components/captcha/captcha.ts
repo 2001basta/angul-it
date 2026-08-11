@@ -1,13 +1,23 @@
 import { Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { Challenge } from '../../models/challenge';
 import { CaptchaService } from '../../service/captcha_service';
 import { Router } from '@angular/router';
-import { FormField } from '@angular/forms/signals';
+
+function requiredArray(control: AbstractControl): ValidationErrors | null {
+  return Array.isArray(control.value) && control.value.length > 0 ? null : { required: true };
+}
 
 @Component({
   selector: 'app-captcha',
-  imports: [FormField],
+  imports: [ReactiveFormsModule],
   templateUrl: './captcha.html',
   styleUrl: './captcha.css',
 })
@@ -27,57 +37,87 @@ export class Captcha {
 
 
 
-ngOnInit(): void {
-  this.captchaService.loadState();
+  ngOnInit(): void {
+    this.captchaService.loadState();
 
-  if(!this.captchaService.hasActiveSession()) {
-  this.router.navigate(['/']);
-  return;
-}
+    if (!this.captchaService.hasActiveSession()) {
+      this.router.navigate(['/']);
+      return;
+    }
 
-this.initForm();
-this.loadChallenge();
+    this.loadChallenge();
   }
 
-initForm() {
-  this.form = this.fb.group({
-    answer: ['', Validators.required]
-  });
-}
-
-loadChallenge() {
-  this.currentStage = this.captchaService.getCurrentStage();
-  this.totalStages = this.captchaService.getTotalStages();
-  this.currentChallenge = this.captchaService.getChallenge(this.currentStage);
-
-  const savedAnswer = this.captchaService.getAnswer(this.currentStage);
-  if (savedAnswer) {
-    this.form.patchValue({ answer: savedAnswer });
-  }
-}
-
-next() {
-  if (this.form.invalid) return;
-
-  this.captchaService.saveAnswer(
-    this.currentStage,
-    this.form.value.answer
-  );
-
-  if (this.currentStage + 1 === this.totalStages) {
-    this.captchaService.markAsCompleted();
-    this.router.navigate(['/result']);
-    return;
+  initForm() {
+    const isImage = this.currentChallenge?.type === 'image';
+    this.form = this.fb.group({
+      answer: [isImage ? [] : '', isImage ? requiredArray : Validators.required]
+    });
   }
 
-  this.captchaService.setStage(this.currentStage + 1);
-  this.loadChallenge();
-}
+  loadChallenge() {
+    this.currentStage = this.captchaService.getCurrentStage();
+    this.totalStages = this.captchaService.getTotalStages();
+    this.currentChallenge = this.captchaService.getChallenge(this.currentStage);
 
-previous() {
-  if (this.currentStage === 0) return;
+    this.initForm();
 
-  this.captchaService.setStage(this.currentStage - 1);
-  this.loadChallenge();
-}
+    const savedAnswer = this.captchaService.getAnswer(this.currentStage);
+    if (savedAnswer) {
+      this.form.patchValue({ answer: savedAnswer });
+    }
+  }
+
+  toggleImageOption(id: string): void {
+    const control = this.form.get('answer')!;
+    const current: string[] = Array.isArray(control.value) ? control.value : [];
+    const next = current.includes(id)
+      ? current.filter(v => v !== id)
+      : [...current, id];
+    control.setValue(next);
+    control.markAsTouched();
+  }
+
+  isImageSelected(id: string): boolean {
+    const value = this.form.get('answer')?.value;
+    return Array.isArray(value) && value.includes(id);
+  }
+
+  iconName(optionId: string): string {
+    return optionId.split('-')[0];
+  }
+
+  next() {
+    if (this.form.invalid) return;
+    let resp = this.currentChallenge.type === 'math' ? Number(this.form.value.answer): this.form.value.answer;
+    this.initForm()
+    this.captchaService.saveAnswer(
+      this.currentStage,
+      resp
+    );
+    
+    if (this.currentStage + 1 === this.totalStages) {
+      this.captchaService.markAsCompleted();
+      this.router.navigate(['/result']);
+      return;
+    }
+
+    this.captchaService.setStage(this.currentStage + 1);
+    this.loadChallenge();
+  }
+
+  previous() {
+    if (this.currentStage === 0) return;
+
+    this.captchaService.setStage(this.currentStage - 1);
+    this.loadChallenge();
+  }
+
+  get stageIndices(): number[] {
+    return Array.from({ length: this.totalStages }, (_, i) => i);
+  }
+
+  get isLastStage(): boolean {
+    return this.currentStage + 1 === this.totalStages;
+  }
 }

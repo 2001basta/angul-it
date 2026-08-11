@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+form {
+  margin: 0;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin: 0.2rem 0 0.3rem;
+}
+
+.image-tile {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--paper-sunken);
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+.image-tile svg {
+  width: 100%;
+  height: 100%;
+}
+.image-tile:hover {
+  border-color: var(--ink-soft);
+  color: var(--ink);
+}
+.image-tile:active {
+  transform: translateY(1px);
+}
+.image-tile:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+.image-tile.is-selected {
+  background: color-mix(in srgb, var(--signal) 16%, var(--paper-sunken));
+  border-color: var(--signal);
+  color: var(--signal-strong);
+}

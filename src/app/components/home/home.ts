@@ -11,7 +11,6 @@ import { Router } from '@angular/router';
 export class Home {
   private captchaService = inject(CaptchaService)
   private router = inject(Router)
-
   startChanllenge(){
     this.captchaService.resetState();
     this.captchaService.generateSession();

@@ -1,13 +1,9 @@
-import { Injectable, signal } from "@angular/core";
+import { Injectable, signal , PLATFORM_ID} from "@angular/core";
 import { Challenge } from "../models/challenge";
+import { CaptchaState } from "../models/challenge";
+import { isPlatformBrowser } from '@angular/common';
+import { Inject } from '@angular/core';
 
-
-interface CaptchaState {
-    challenges: Challenge[];
-    answers: any[];
-    currentStage: number;
-    completed: boolean;
-}
 
 @Injectable({ providedIn: 'root' })
 export class CaptchaService {
@@ -21,7 +17,7 @@ export class CaptchaService {
     })
 
     private readonly STORAGE_KEY = 'captchaState';
-    constructor() {
+    constructor(@Inject(PLATFORM_ID) private platformId: Object) {
         this.loadState();
     }
 
@@ -110,13 +106,18 @@ export class CaptchaService {
     //     this.saveState();
     // }
     private saveState(): void {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state));
+        if (isPlatformBrowser(this.platformId) && this.state()) {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state()));
+        }
     }
 
     loadState(): void {
+        if (!isPlatformBrowser(this.platformId)) {
+            return;
+        }
         const saved = localStorage.getItem(this.STORAGE_KEY);
         if (saved) {
-            this.state = JSON.parse(saved);
+            this.state.set(JSON.parse(saved));
         }
     }
     private getChallengeBank(): Challenge[] {
@@ -144,6 +145,20 @@ export class CaptchaService {
                 type: 'text',
                 question: 'Type the word "Captcha"',
                 correctAnswer: 'Captcha'
+            },
+            {
+                id: 5,
+                type: 'image',
+                question: "Sélectionnez toutes les voitures",
+                options: ['car-1', 'bike-1', 'tree-1', 'car-2', 'house-1', 'umbrella-1', 'car-3', 'bus-1', 'star-1'],
+                correctAnswer: ['car-1', 'car-2', 'car-3']
+            },
+            {
+                id: 6,
+                type: 'image',
+                question: "Sélectionnez tous les arbres",
+                options: ['house-1', 'tree-1', 'sun-1', 'bike-1', 'tree-2', 'cloud-1', 'bus-1', 'tree-3', 'star-1'],
+                correctAnswer: ['tree-1', 'tree-2', 'tree-3']
             }
         ];
     }

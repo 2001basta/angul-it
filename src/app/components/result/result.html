@@ -1,1 +1,56 @@
-<p>result works!</p>
+<div class="checkpoint-stage">
+  <section class="checkpoint-card">
+    <div class="checkpoint-stub">
+      <div class="checkpoint-notches" aria-hidden="true">
+        @for (r of results(); track $index) {
+          <div class="checkpoint-notch" data-state="done"></div>
+        }
+      </div>
+      <div class="checkpoint-stub-count">TERMINÉ</div>
+    </div>
+
+    <div class="checkpoint-panel">
+      <p class="checkpoint-eyebrow"><span class="dot"></span>Vérification terminée</p>
+
+      <div class="result-score-row">
+        <div class="result-score-num">
+          {{ score() }}<small> / {{ total() }}</small>
+        </div>
+        <div class="result-stamp" [class.is-fail]="score() < total()">
+          <span>{{ score() === total() ? 'Accès\nVérifié' : 'Accès\nPartiel' }}</span>
+        </div>
+      </div>
+
+      <p class="checkpoint-lede" style="margin-bottom: 0.4rem;">
+        Voici le détail de vos réponses.
+      </p>
+
+      <ul class="result-list">
+        @for (r of results(); track $index) {
+          <li [class.fail]="!r.isCorrect">
+            <span class="result-icon">{{ r.isCorrect ? '✓' : '✕' }}</span>
+            <div class="result-body">
+              <p class="result-question">{{ r.question }}</p>
+              @if (r.isCorrect) {
+                <p class="result-answer">
+                  Réponse donnée : <span class="correct">{{ r.userAnswer }}</span>
+                </p>
+              } @else {
+                <p class="result-answer">
+                  Réponse donnée : <span class="given">{{ r.userAnswer ?? '—' }}</span>
+                  · attendu : <span class="correct">{{ r.correctAnswer }}</span>
+                </p>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+
+      <div class="checkpoint-actions-row" style="margin-top: 1.5rem;">
+        <button class="btn btn-ghost" type="button" style="flex: 1;" (click)="restart()">
+          Recommencer
+        </button>
+      </div>
+    </div>
+  </section>
+</div>

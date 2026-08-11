@@ -2,6 +2,7 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.0.
 
+
 ## Development server
 
 To start a local development server, run:
@@ -10,21 +11,8 @@ To start a local development server, run:
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+project run in `http://localhost:4200/`.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
 
 ## Building
 
@@ -34,27 +22,40 @@ To build the project run:
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+This will compile your project and store the build artifacts in the `dist/` directory.
 
-## Running unit tests
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
 
-```bash
-ng test
+## Architecture
+
+AngulIt is a multi-stage CAPTCHA flow: a user starts a session, answers a
+random set of challenges one at a time, then sees a scored result.
+
+### Flow
+
+```
+Home ("/")  --start-->  Captcha ("/captcha")  --3/3 answered-->  Result ("/result")
+                              ^  |
+                              |  | previous / next
+                              +--+
 ```
 
-## Running end-to-end tests
+- **`/`** — `Home` resets any previous session, asks `CaptchaService` to
+  build a new one, then navigates to `/captcha`.
+- **`/captcha`** — `Captcha` shows one challenge at a time. It redirects
+  back to `/` if there is no active session (e.g. direct URL access).
+- **`/result`** — `Result` shows the score and a per-question breakdown.
+  `ResultGuard` blocks direct access until the session is completed,
+  sending the user back to `/captcha` otherwise.
 
-For end-to-end (e2e) testing, run:
+### Pieces
 
-```bash
-ng e2e
-```
+| File | Responsibility |
+|---|---|
+| `models/challenge.ts` | `Challenge` shape (`math` \| `text` \| `image`) and `CaptchaState`. |
+| `service/captcha_service.ts` | Single source of truth: picks a random set of challenges, tracks the current stage and answers, scores the session, and persists/restores everything to `localStorage` (guarded for SSR via `isPlatformBrowser`). |
+| `components/home` | Entry screen — starts a session. |
+| `components/captcha` | Renders the current challenge (text input for `math`/`text`, a selectable image grid for `image`), validates the answer with a Reactive Form before allowing `next()`, and lets the user go back with `previous()`. |
+| `components/result` | Reads the finished session from the service and displays score + details. |
+| `guard/guard.ts` | `ResultGuard` — route guard enforcing the "no result without completion" rule. |
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-# angul-it
