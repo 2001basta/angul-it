@@ -21,6 +21,16 @@
         </div>
       </div>
 
+      @if (score() === total()) {
+        <p class="checkpoint-lede result-congrats">
+          🎉 Félicitations, vous avez prouvé que vous n'êtes pas un robot !
+        </p>
+      } @else {
+        <p class="checkpoint-lede result-congrats">
+          Vérification incomplète. Retentez le parcours pour confirmer que vous n'êtes pas un robot.
+        </p>
+      }
+
       <p class="checkpoint-lede" style="margin-bottom: 0.4rem;">
         Voici le détail de vos réponses.
       </p>

@@ -19,11 +19,6 @@ export class Result {
   private router = inject(Router)
 
   ngOnInit(): void {
-    if (!this.captchaService.isCompleted()) {
-      this.router.navigate(['/captcha']);
-      return;
-    }
-
     this.score.set(this.captchaService.calculateScore());
     this.total.set(this.captchaService.getTotalStages());
     this.results.set(this.captchaService.getDetailedResults());

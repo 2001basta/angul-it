@@ -28,6 +28,7 @@ export class Captcha {
   currentChallenge!: Challenge;
   currentStage!: number;
   totalStages!: number;
+  answerIncorrect = false;
 
   constructor(
     private fb: FormBuilder,
@@ -53,6 +54,8 @@ export class Captcha {
     this.form = this.fb.group({
       answer: [isImage ? [] : '', isImage ? requiredArray : Validators.required]
     });
+    this.answerIncorrect = false;
+    this.form.get('answer')!.valueChanges.subscribe(() => this.answerIncorrect = false);
   }
 
   loadChallenge() {
@@ -90,12 +93,17 @@ export class Captcha {
   next() {
     if (this.form.invalid) return;
     let resp = this.currentChallenge.type === 'math' ? Number(this.form.value.answer): this.form.value.answer;
-    this.initForm()
+
+    if (!this.captchaService.isAnswerCorrect(this.currentChallenge, resp)) {
+      this.answerIncorrect = true;
+      return;
+    }
+
     this.captchaService.saveAnswer(
       this.currentStage,
       resp
     );
-    
+
     if (this.currentStage + 1 === this.totalStages) {
       this.captchaService.markAsCompleted();
       this.router.navigate(['/result']);

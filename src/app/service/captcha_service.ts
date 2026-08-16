@@ -8,7 +8,6 @@ import { Inject } from '@angular/core';
 @Injectable({ providedIn: 'root' })
 export class CaptchaService {
 
-    private currentStage = signal(0);
     private state = signal<CaptchaState>({
         challenges: [],
         answers: [],
@@ -25,10 +24,12 @@ export class CaptchaService {
     generateSession(): void {
         const challengeBank: Challenge[] = this.getChallengeBank();
 
-        this.state().challenges = this.shuffle(challengeBank).slice(0, 3);
-        this.state().answers = [];
-        this.state().currentStage = 0;
-        this.state().completed = false;
+        this.state.set({
+            challenges: this.shuffle(challengeBank).slice(0, 3),
+            answers: [],
+            currentStage: 0,
+            completed: false
+        });
 
         this.saveState();
     }
@@ -45,21 +46,17 @@ export class CaptchaService {
         return this.state().challenges.length > 0;
     }
     markAsCompleted(): void {
-        this.state().completed = true;
+        this.state.update(s => ({ ...s, completed: true }));
         this.saveState();
     }
     isCompleted(): boolean {
         return this.state().completed;
     }
-    nextStage() {
-        this.currentStage.set(this.currentStage() + 1);
-        this.saveState();
-    }
     getCurrentStage(): number {
         return this.state().currentStage;
     }
     setStage(stage: number): void {
-        this.state().currentStage = stage;
+        this.state.update(s => ({ ...s, currentStage: stage }));
         this.saveState();
     }
     getTotalStages(): number {
@@ -72,8 +69,15 @@ export class CaptchaService {
         return this.state().answers[index];
     }
     saveAnswer(index: number, answer: any): void {
-        this.state().answers[index] = answer;
+        this.state.update(s => {
+            const answers = [...s.answers];
+            answers[index] = answer;
+            return { ...s, answers };
+        });
         this.saveState();
+    }
+    isAnswerCorrect(challenge: Challenge, answer: any): boolean {
+        return this.isCorrectAnswer(challenge.correctAnswer, answer);
     }
     calculateScore(): number {
         let score = 0;
